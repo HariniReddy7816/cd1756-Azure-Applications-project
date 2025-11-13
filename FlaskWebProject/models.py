@@ -28,7 +28,7 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(128))
 
     def __repr__(self):
-        return '<User {}>'.format(self.username)
+        return f"<User {self.username}>"
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -53,7 +53,7 @@ class Post(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
 
     def __repr__(self):
-        return '<Post {}>'.format(self.body)
+        return f"<Post {self.body}>"
 
     def save_changes(self, form, file, userId, new=False):
         self.title = form.title.data
@@ -63,18 +63,30 @@ class Post(db.Model):
 
         if file:
             filename = secure_filename(file.filename)
-            fileextension = filename.rsplit('.', 1)[1]
-            Randomfilename = id_generator()
-            filename = Randomfilename + '.' + fileextension
+            ext = filename.rsplit('.', 1)[1]
+            newname = id_generator() + "." + ext
 
             try:
-                # Upload new file
+                # Upload new image
                 container_client.upload_blob(
-                    name=filename,
+                    name=newname,
                     data=file,
                     overwrite=True
                 )
 
-                # Delete old file if exists
+                # Delete old image if exists
                 if self.image_path:
                     try:
+                        container_client.delete_blob(self.image_path)
+                    except Exception:
+                        pass
+
+            except Exception as e:
+                flash(str(e))
+
+            self.image_path = newname
+
+        if new:
+            db.session.add(self)
+
+        db.session.commit()
