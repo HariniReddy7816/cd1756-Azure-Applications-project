@@ -1,16 +1,38 @@
-import urllib
+import os
 
-SQL_SERVER = os.environ.get('SQL_SERVER') or 'cmsa.database.windows.net'
-SQL_DATABASE = os.environ.get('SQL_DATABASE') or 'cms'
-SQL_USER_NAME = os.environ.get('SQL_USER_NAME') or 'cmsadmin'
-SQL_PASSWORD = os.environ.get('SQL_PASSWORD') or 'CMS4dmin'
+basedir = os.path.abspath(os.path.dirname(__file__))
 
-params = urllib.parse.quote_plus(
-    f"DRIVER={{ODBC Driver 17 for SQL Server}};"
-    f"SERVER={SQL_SERVER};"
-    f"DATABASE={SQL_DATABASE};"
-    f"UID={SQL_USER_NAME};"
-    f"PWD={SQL_PASSWORD}"
-)
+class Config(object):
+    SECRET_KEY = os.environ.get('SECRET_KEY')
 
-SQLALCHEMY_DATABASE_URI = f"mssql+pyodbc:///?odbc_connect={params}"
+    # Blob Storage
+    BLOB_ACCOUNT = os.environ.get('BLOB_ACCOUNT')
+    BLOB_STORAGE_KEY = os.environ.get('BLOB_STORAGE_KEY')
+    BLOB_CONTAINER = os.environ.get('BLOB_CONTAINER')
+    BLOB_CONNECTION_STRING = os.environ.get('BLOB_CONNECTION_STRING')
+
+    # SQL Server Settings
+    SQL_SERVER = os.environ.get('SQL_SERVER')
+    SQL_DATABASE = os.environ.get('SQL_DATABASE')
+    SQL_USER_NAME = os.environ.get('SQL_USER_NAME')
+    SQL_PASSWORD = os.environ.get('SQL_PASSWORD')
+
+    # ------------------------------
+    # FIXED SQLALCHEMY CONNECTION STRING
+    # ------------------------------
+    SQLALCHEMY_DATABASE_URI = (
+        f"mssql+pyodbc://{SQL_USER_NAME}:{SQL_PASSWORD}"
+        f"@{SQL_SERVER}:1433/{SQL_DATABASE}"
+        "?driver=ODBC+Driver+17+for+SQL+Server"
+    )
+
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
+
+    # Azure AD Auth
+    CLIENT_SECRET = os.environ.get("CLIENT_SECRET")
+    CLIENT_ID = os.environ.get("CLIENT_ID")
+    AUTHORITY = "https://login.microsoftonline.com/common"
+    REDIRECT_PATH = "/getAToken"
+    SCOPE = ["User.Read"]
+
+    SESSION_TYPE = "filesystem"
